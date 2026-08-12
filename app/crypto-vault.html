@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cold Vault — Portfolio</title>
+<style>
+  :root{
+    --ink:#0d1117; --panel:#141b24; --panel-2:#1b2430; --line:#26313f;
+    --mute:#7c8aa0; --text:#e6edf5; --gold:#e2b64b; --gold-dim:#8a7233;
+    --green:#4ec9a3; --red:#e06c75; --shadow:0 10px 40px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:radial-gradient(1200px 600px at 80% -10%, rgba(226,182,75,.06), transparent 60%), var(--ink);color:var(--text);font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+  .wrap{max-width:820px;margin:0 auto;padding:40px 20px 80px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  .brand{display:flex;align-items:center;gap:14px}
+  .mark{width:42px;height:42px;border-radius:11px;flex:none;background:linear-gradient(145deg,var(--gold),var(--gold-dim));display:grid;place-items:center;color:#1a1200;font-weight:800;font-size:20px;box-shadow:0 4px 18px rgba(226,182,75,.25)}
+  h1{font-size:22px;margin:0;letter-spacing:-.02em;font-weight:700}
+  .sub{color:var(--mute);font-size:13px;margin-top:2px}
+  .ccy{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);padding:4px;border-radius:12px}
+  .ccy button{background:none;border:0;color:var(--mute);font:inherit;font-size:13px;font-weight:600;padding:6px 11px;border-radius:8px;cursor:pointer;transition:.15s}
+  .ccy button.on{background:var(--panel-2);color:var(--gold)}
+
+  .tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);padding:5px;border-radius:14px;margin-bottom:24px}
+  .tabs button{flex:1;background:none;border:0;color:var(--mute);font:inherit;font-weight:600;font-size:14px;padding:11px;border-radius:9px;cursor:pointer;transition:.15s}
+  .tabs button.on{background:var(--panel-2);color:var(--gold)}
+  .tabs button:hover:not(.on){color:var(--text)}
+
+  .hero{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--line);border-radius:18px;padding:28px 30px;margin-bottom:16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .hero:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent 55%,rgba(226,182,75,.05))}
+  .hero .lbl{color:var(--mute);font-size:12px;text-transform:uppercase;letter-spacing:.14em;font-weight:600}
+  .total{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:clamp(38px,8vw,60px);font-weight:600;letter-spacing:-.02em;margin-top:6px;color:var(--gold);line-height:1.05}
+  .total .zero{color:var(--gold-dim)}
+  .hero .meta{color:var(--mute);font-size:13px;margin-top:10px}
+
+  .refresh-bar{display:flex;align-items:center;gap:12px;margin:0 2px 18px;flex-wrap:wrap}
+  .refresh-bar .btn{font:inherit;font-weight:600;font-size:13px;border-radius:11px;cursor:pointer;padding:10px 16px;border:1px solid var(--line);background:var(--panel-2);color:var(--text);transition:.15s}
+  .refresh-bar .btn:hover{border-color:var(--gold-dim)}
+  .refresh-bar .btn:disabled{opacity:.55;cursor:not-allowed}
+  .live-dot{width:9px;height:9px;border-radius:50%;background:#3a4657;flex:none}
+  .live-dot.on{background:var(--green);animation:pulse 1.8s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(78,201,163,.5)}70%{box-shadow:0 0 0 7px rgba(78,201,163,0)}100%{box-shadow:0 0 0 0 rgba(78,201,163,0)}}
+  .live-status{color:var(--green);font-size:12px;font-family:ui-monospace,Menlo,Consolas,monospace}
+
+  .holdings{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .h-head,.h-row{display:grid;grid-template-columns:1.6fr 1fr 1fr 1.1fr;gap:10px;padding:13px 18px;align-items:center}
+  .h-head{color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.1em;font-weight:600;background:var(--panel-2)}
+  .h-row{border-top:1px solid var(--line);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px}
+  .h-row .coin{display:flex;align-items:center;gap:11px;font-family:"Inter",sans-serif;min-width:0}
+  .chip{width:28px;height:28px;border-radius:8px;flex:none;display:grid;place-items:center;font-weight:800;font-size:10px;color:#0d1117;font-family:"Inter",sans-serif}
+  .coin .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+  .coin .src{display:block;font-size:11px;color:var(--mute);font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .val{color:var(--gold);text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+  .price{color:var(--mute);text-align:right;font-variant-numeric:tabular-nums}
+  .empty{color:var(--mute);text-align:center;padding:34px 20px;font-size:14px}
+  .empty b{color:var(--text);font-weight:600}
+  .err{color:var(--red);font-size:12px;font-family:ui-monospace,monospace;padding:11px 18px;border-top:1px solid var(--line)}
+  .spin{display:inline-block;width:12px;height:12px;border:2px solid var(--gold-dim);border-top-color:var(--gold);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-right:6px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  .view{animation:fade .22s ease}
+  [hidden]{display:none !important}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .sec-head{display:flex;align-items:center;gap:10px;margin:24px 4px 10px}
+  .sec-head:first-child{margin-top:0}
+  .sec-head h3{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--mute);margin:0}
+  .sec-head .tag{font-size:11px;color:var(--gold-dim);border:1px solid var(--line);padding:2px 8px;border-radius:20px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px}
+  .rowlabels{display:grid;grid-template-columns:1fr 1fr 1.3fr auto;gap:10px;padding:2px 8px 0;color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+  .rowlabels span:last-child{width:38px}
+  .row{display:grid;grid-template-columns:1fr 1fr 1.3fr auto;gap:10px;align-items:center;padding:8px;border-radius:11px}
+  .row.loc-row{grid-template-columns:1fr auto}
+  .row + .row{border-top:1px solid var(--line)}
+  select,input{background:var(--ink);border:1px solid var(--line);color:var(--text);font:inherit;font-size:14px;padding:11px 12px;border-radius:10px;width:100%;outline:none;transition:.15s}
+  input{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:-.01em}
+  select:focus,input:focus{border-color:var(--gold-dim);box-shadow:0 0 0 3px rgba(226,182,75,.12)}
+  input::placeholder{color:#4a586b;font-family:"Inter",sans-serif}
+  .del{background:none;border:1px solid var(--line);color:var(--mute);width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:18px;line-height:1;transition:.15s;flex:none}
+  .del:hover{border-color:var(--red);color:var(--red)}
+  .rowfoot{padding:10px 8px 6px}
+  .btn2{font:inherit;font-weight:600;font-size:14px;border-radius:11px;cursor:pointer;padding:11px 16px;border:1px solid var(--line);background:var(--panel-2);color:var(--text);transition:.15s}
+  .btn2:hover{border-color:var(--gold-dim)}
+  .field{margin-top:16px} .field:first-child{margin-top:6px}
+  .field > label{display:block;color:var(--mute);font-size:11px;font-weight:600;margin-bottom:7px;text-transform:uppercase;letter-spacing:.09em}
+  .field-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .seg{display:flex;gap:4px;background:var(--ink);border:1px solid var(--line);padding:4px;border-radius:10px;flex-wrap:wrap}
+  .seg button{background:none;border:0;color:var(--mute);font:inherit;font-size:13px;font-weight:600;padding:7px 13px;border-radius:7px;cursor:pointer;transition:.15s}
+  .seg button.on{background:var(--panel-2);color:var(--gold)}
+  .hint{color:var(--mute);font-size:12px;margin-top:9px;line-height:1.5}
+  .hint a{color:var(--gold-dim)}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:11px 18px;border-radius:12px;font-size:13px;font-weight:500;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:50}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  footer{color:var(--mute);font-size:12px;text-align:center;margin-top:26px;line-height:1.7}
+  footer code{color:var(--gold-dim)}
+
+  @media(max-width:600px){
+    .h-head,.h-row{grid-template-columns:1.4fr 1fr 1.1fr}
+    .h-head .price,.h-row .price{display:none}
+    .rowlabels{display:none}
+    .row{grid-template-columns:1fr 1fr auto}
+    .row .loc{grid-column:1/3}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="mark">◈</div>
+      <div><h1 id="pname">My Portfolio</h1><div class="sub">Combined crypto holdings</div></div>
+    </div>
+    <div class="ccy" id="ccy"><button data-c="usd" class="on">USD</button><button data-c="eur">EUR</button><button data-c="gbp">GBP</button></div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-v="main" class="on">Portfolio</button>
+    <button data-v="accounts">Accounts</button>
+    <button data-v="settings">Settings</button>
+  </nav>
+
+  <!-- PORTFOLIO -->
+  <div class="view" id="viewMain">
+    <div class="hero">
+      <div class="lbl">Total portfolio value</div>
+      <div class="total" id="total"><span class="zero">—</span></div>
+      <div class="meta" id="meta">Combined across everything you hold.</div>
+    </div>
+    <div class="refresh-bar">
+      <button class="btn" id="fetch">↻ Update prices</button>
+      <span class="live-dot" id="liveDot"></span>
+      <span class="live-status" id="liveStatus"></span>
+    </div>
+    <div class="holdings">
+      <div class="h-head"><div>Asset</div><div class="num">Amount</div><div class="price">Price</div><div class="val">Value</div></div>
+      <div id="holdings"><div class="empty"><b>No holdings yet.</b><br>Open <b>Accounts</b> to add what you hold.</div></div>
+    </div>
+  </div>
+
+  <!-- ACCOUNTS -->
+  <section class="view" id="viewAccounts" hidden>
+    <div class="sec-head"><h3>Your holdings</h3><span class="tag" id="hCount">0</span></div>
+    <div class="card">
+      <div class="rowlabels"><span>Coin</span><span>Amount</span><span>Location</span><span></span></div>
+      <div id="rows"></div>
+      <div class="rowfoot"><button class="btn2" id="add">+ Add holding</button></div>
+    </div>
+    <div class="hint" style="margin:12px 4px 0">Pick a location from your saved list, or type a new one. Manage the list in <b>Settings</b>.</div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="view" id="viewSettings" hidden>
+    <div class="sec-head"><h3>Portfolio name</h3></div>
+    <div class="card" style="padding:16px 18px">
+      <input type="text" id="nameInput" placeholder="My Portfolio" maxlength="40">
+    </div>
+
+    <div class="sec-head"><h3>Locations</h3><span class="tag" id="lCount">0</span></div>
+    <div class="card">
+      <div id="locrows"></div>
+      <div class="rowfoot"><button class="btn2" id="addloc">+ Add location</button></div>
+    </div>
+
+    <div class="sec-head"><h3>Price feed &amp; live updates</h3></div>
+    <div class="card" style="padding:16px 18px">
+      <div class="field">
+        <label>CoinGecko API key — optional</label>
+        <input type="password" id="apiKey" placeholder="Higher limits + live refresh" autocomplete="off">
+        <div class="hint">Free Demo key from the <a href="https://www.coingecko.com/en/developers/dashboard" target="_blank" rel="noopener">CoinGecko dashboard</a>. Stored only in this browser.</div>
+      </div>
+      <div class="field"><label>Key tier</label><div class="seg" id="keyType"><button data-k="demo" class="on">Demo (free)</button><button data-k="pro">Pro</button></div></div>
+      <div class="field"><label>Live price refresh</label><div class="seg" id="interval"><button data-s="0" class="on">Off</button><button data-s="15">15s</button><button data-s="30">30s</button><button data-s="60">60s</button></div></div>
+    </div>
+
+    <div class="sec-head"><h3>Data</h3></div>
+    <div class="card" style="padding:16px 18px">
+      <div class="field-row">
+        <button class="btn2" id="exportBtn">⬇ Export data</button>
+        <button class="btn2" id="importBtn">⬆ Import data</button>
+        <input type="file" id="importFile" accept="application/json,.json" hidden>
+      </div>
+      <div class="hint">Export saves everything — holdings, locations, name and settings — to a JSON file you can back up or move to another device. Import loads a file and replaces your current data.</div>
+    </div>
+  </section>
+
+  <footer>Balances entered manually · live prices via <code>coingecko.com</code> · autosaves to your NAS through the storage bridge, shared by every browser on your network.</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<datalist id="coins"></datalist>
+<datalist id="locs"></datalist>
+
+<script>
+const CCY={usd:"$",eur:"€",gbp:"£"};
+const COINS={
+  BTC:{id:"bitcoin",name:"Bitcoin",color:"#f7931a"},ETH:{id:"ethereum",name:"Ethereum",color:"#8a92b2"},
+  USDT:{id:"tether",name:"Tether",color:"#26a17b"},USDC:{id:"usd-coin",name:"USD Coin",color:"#2775ca"},
+  BNB:{id:"binancecoin",name:"BNB",color:"#f3ba2f"},SOL:{id:"solana",name:"Solana",color:"#9945ff"},
+  XRP:{id:"ripple",name:"XRP",color:"#25a768"},ADA:{id:"cardano",name:"Cardano",color:"#0033ad"},
+  DOGE:{id:"dogecoin",name:"Dogecoin",color:"#c2a633"},LTC:{id:"litecoin",name:"Litecoin",color:"#b8b8b8"},
+  DOT:{id:"polkadot",name:"Polkadot",color:"#e6007a"},MATIC:{id:"matic-network",name:"Polygon",color:"#8247e5"},
+  DASH:{id:"dash",name:"Dash",color:"#008ce7"},LINK:{id:"chainlink",name:"Chainlink",color:"#2a5ada"},
+  TRX:{id:"tron",name:"TRON",color:"#eb0029"},AVAX:{id:"avalanche-2",name:"Avalanche",color:"#e84142"},
+  SHIB:{id:"shiba-inu",name:"Shiba Inu",color:"#e33d24"},UNI:{id:"uniswap",name:"Uniswap",color:"#ff007a"},
+  ATOM:{id:"cosmos",name:"Cosmos",color:"#6f7390"},XLM:{id:"stellar",name:"Stellar",color:"#7d00ff"},
+  BCH:{id:"bitcoin-cash",name:"Bitcoin Cash",color:"#0ac18e"},ETC:{id:"ethereum-classic",name:"Ethereum Classic",color:"#3ab83a"},
+  FIL:{id:"filecoin",name:"Filecoin",color:"#0090ff"},APT:{id:"aptos",name:"Aptos",color:"#4ecdc4"},
+  ARB:{id:"arbitrum",name:"Arbitrum",color:"#28a0f0"},OP:{id:"optimism",name:"Optimism",color:"#ff0420"},
+  NEAR:{id:"near",name:"NEAR",color:"#5f8afa"},ALGO:{id:"algorand",name:"Algorand",color:"#888"},
+  VET:{id:"vechain",name:"VeChain",color:"#15bdff"},ICP:{id:"internet-computer",name:"Internet Computer",color:"#f0648c"},
+  DAI:{id:"dai",name:"Dai",color:"#f5ac37"},XMR:{id:"monero",name:"Monero",color:"#ff6600"},
+  XTZ:{id:"tezos",name:"Tezos",color:"#2c7df7"},AAVE:{id:"aave",name:"Aave",color:"#b6509e"},
+  SAND:{id:"the-sandbox",name:"The Sandbox",color:"#00adef"},MANA:{id:"decentraland",name:"Decentraland",color:"#ff2d55"},
+  GRT:{id:"the-graph",name:"The Graph",color:"#6f4cff"},FTM:{id:"fantom",name:"Fantom",color:"#1969ff"},
+  PEPE:{id:"pepe",name:"Pepe",color:"#4a9e3f"},
+};
+
+let state={name:"My Portfolio",ccy:"usd",holdings:[],locations:[],apiKey:"",keyType:"demo",interval:0};
+let lastAgg=null,lastPrices={},lastErrors=[],lastFetch=0;
+const $=id=>document.getElementById(id);
+
+function save(){try{const raw=JSON.stringify(state);if(window.storage){window.storage.set("coldvault",raw).catch(()=>{});}else{localStorage.setItem("coldvault",raw);}}catch(e){}}
+async function load(){if(window.storage){try{const d=await Promise.race([window.storage.get("coldvault"),new Promise(r=>setTimeout(()=>r(null),4000))]);if(d&&d.value){const s=JSON.parse(d.value);if(s&&typeof s==="object")state={...state,...s};}}catch(e){}}else{try{const s=JSON.parse(localStorage.getItem("coldvault"));if(s&&typeof s==="object")state={...state,...s};}catch(e){}}
+  if(!Array.isArray(state.holdings)||!state.holdings.length)state.holdings=[{asset:"",amount:"",location:""}];
+  if(!Array.isArray(state.locations))state.locations=[];}
+function colorFor(sym){if(COINS[sym])return COINS[sym].color;let h=0;for(const c of sym)h=(h*31+c.charCodeAt(0))>>>0;return `hsl(${h%360} 55% 58%)`;}
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2200);}
+
+(function(){$("coins").innerHTML=Object.entries(COINS).map(([s,c])=>`<option value="${s}">${c.name}</option>`).join("");})();
+function renderLocsDatalist(){$("locs").innerHTML=state.locations.filter(x=>x.trim()).map(l=>`<option value="${l.replace(/"/g,'&quot;')}">`).join("");}
+
+// ---- Accounts (holdings) ----
+function renderRows(){
+  $("rows").innerHTML="";
+  state.holdings.forEach((h,i)=>{
+    const row=document.createElement("div");row.className="row";
+    row.innerHTML=`<input data-i="${i}" class="asset" list="coins" placeholder="BTC" value="${(h.asset||"").replace(/"/g,'&quot;')}">
+      <input data-i="${i}" class="amt" type="text" inputmode="decimal" placeholder="0.00" value="${(h.amount??"").toString().replace(/"/g,'&quot;')}">
+      <input data-i="${i}" class="loc" list="locs" placeholder="e.g. Coinbase" value="${(h.location||"").replace(/"/g,'&quot;')}">
+      <button class="del" data-i="${i}">×</button>`;
+    $("rows").appendChild(row);
+  });
+  $("rows").querySelectorAll(".asset").forEach(s=>s.oninput=e=>{state.holdings[e.target.dataset.i].asset=e.target.value.trim().toUpperCase();save();counts();liveRecompute();});
+  $("rows").querySelectorAll(".amt").forEach(s=>s.oninput=e=>{state.holdings[e.target.dataset.i].amount=e.target.value.replace(/[^0-9.]/g,"");save();liveRecompute();});
+  $("rows").querySelectorAll(".loc").forEach(s=>s.oninput=e=>{state.holdings[e.target.dataset.i].location=e.target.value;save();liveRecompute();});
+  $("rows").querySelectorAll(".del").forEach(b=>b.onclick=e=>{state.holdings.splice(e.target.dataset.i,1);if(!state.holdings.length)state.holdings.push({asset:"",amount:"",location:""});save();renderRows();counts();liveRecompute();});
+  counts();
+}
+$("add").onclick=()=>{state.holdings.push({asset:"",amount:"",location:""});save();renderRows();};
+
+// ---- Locations manager ----
+function renderLocRows(){
+  $("locrows").innerHTML="";
+  if(!state.locations.length)$("locrows").innerHTML='<div class="empty" style="padding:16px">No locations yet — add ones like Coinbase, Ledger, MetaMask.</div>';
+  state.locations.forEach((l,i)=>{
+    const row=document.createElement("div");row.className="row loc-row";
+    row.innerHTML=`<input data-i="${i}" class="locname" placeholder="Location name" value="${(l||"").replace(/"/g,'&quot;')}"><button class="del" data-i="${i}">×</button>`;
+    $("locrows").appendChild(row);
+  });
+  $("locrows").querySelectorAll(".locname").forEach(s=>{
+    s.dataset.old=state.locations[s.dataset.i]||"";
+    s.oninput=e=>{
+      const i=e.target.dataset.i,old=e.target.dataset.old,val=e.target.value;
+      state.locations[i]=val;
+      if(old&&old!==val)state.holdings.forEach(h=>{if(h.location===old)h.location=val;});
+      e.target.dataset.old=val;save();renderLocsDatalist();renderRows();
+    };
+  });
+  $("locrows").querySelectorAll(".del").forEach(b=>b.onclick=e=>{state.locations.splice(e.target.dataset.i,1);save();renderLocRows();renderLocsDatalist();lcount();});
+  lcount();
+}
+$("addloc").onclick=()=>{state.locations.push("");save();renderLocRows();};
+function lcount(){$("lCount").textContent=state.locations.filter(l=>l.trim()).length;}
+function counts(){$("hCount").textContent=state.holdings.filter(h=>h.asset.trim()&&+h.amount>0).length;}
+
+// ---- pricing / aggregate ----
+function buildAgg(){
+  const agg={};
+  state.holdings.forEach(h=>{
+    const sym=(h.asset||"").trim().toUpperCase(),amt=+h.amount;
+    if(!sym||!(amt>0))return;
+    if(!agg[sym])agg[sym]={amount:0,id:COINS[sym]?.id||null,color:colorFor(sym),sources:new Set()};
+    agg[sym].amount+=amt;if((h.location||"").trim())agg[sym].sources.add(h.location.trim());
+  });
+  return agg;
+}
+async function getPrices(ids){
+  if(!ids.length)return {};
+  const key=state.apiKey.trim(),pro=state.keyType==="pro"&&key;
+  const base=pro?"https://pro-api.coingecko.com/api/v3":"https://api.coingecko.com/api/v3";
+  const headers={};if(key)headers[pro?"x-cg-pro-api-key":"x-cg-demo-api-key"]=key;
+  const r=await fetch(`${base}/simple/price?ids=${ids.join(",")}&vs_currencies=usd,eur,gbp`,{headers});
+  if(!r.ok)throw new Error(r.status===401||r.status===403?"invalid API key":r.status===429?"rate limited":"price feed down");
+  return r.json();
+}
+function liveRecompute(){lastAgg=buildAgg();render();}
+async function refreshAll(){
+  lastAgg=buildAgg();
+  if(!Object.keys(lastAgg).length){render();return;}
+  $("fetch").disabled=true;$("fetch").innerHTML='<span class="spin"></span>Updating…';lastErrors=[];
+  try{lastPrices=await getPrices([...new Set(Object.values(lastAgg).map(a=>a.id).filter(Boolean))]);lastFetch=Date.now();}
+  catch(e){lastErrors.push("Prices — "+e.message);}
+  render();startLive();
+  $("fetch").disabled=false;$("fetch").textContent="↻ Update prices";
+}
+$("fetch").onclick=refreshAll;
+
+function render(){
+  const cur=state.ccy,sign=CCY[cur];let grand=0;
+  const items=Object.entries(lastAgg||{}).map(([sym,d])=>{const price=d.id?(lastPrices?.[d.id]?.[cur]??null):null;const value=price!=null?d.amount*price:null;if(value!=null)grand+=value;return {sym,d,price,value};}).sort((a,b)=>(b.value??-1)-(a.value??-1));
+  const rows=items.map(({sym,d,price,value})=>{
+    const amt=d.amount.toLocaleString(undefined,{maximumFractionDigits:8});
+    const ps=price!=null?sign+price.toLocaleString(undefined,{maximumFractionDigits:price<1?6:2}):"—";
+    const vs=value!=null?sign+value.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}):'<span style="color:var(--mute)">—</span>';
+    const src=[...d.sources].join(", ")||(COINS[sym]?.name||"");
+    return `<div class="h-row"><div class="coin"><span class="chip" style="background:${d.color}">${sym.slice(0,3)}</span><span class="nm">${sym}<span class="src">${src}</span></span></div><div class="num">${amt}</div><div class="price">${ps}</div><div class="val">${vs}</div></div>`;
+  }).join("");
+  $("holdings").innerHTML=(rows||'<div class="empty"><b>No holdings yet.</b><br>Open <b>Accounts</b> to add what you hold.</div>')+lastErrors.map(e=>`<div class="err">⚠ ${e}</div>`).join("");
+  const g=sign+grand.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  $("total").innerHTML=grand>0?g:`<span class="zero">${g}</span>`;
+  $("meta").textContent=items.length?`${items.length} asset${items.length!==1?"s":""} · updated ${new Date().toLocaleTimeString()}`:"Combined across everything you hold.";
+}
+
+// ---- tabs ----
+const VIEWS={main:"viewMain",accounts:"viewAccounts",settings:"viewSettings"};
+function switchView(v){
+  Object.values(VIEWS).forEach(id=>$(id).hidden=true);
+  $(VIEWS[v]).hidden=false;
+  [...$("tabs").children].forEach(b=>b.classList.toggle("on",b.dataset.v===v));
+  window.scrollTo({top:0,behavior:"smooth"});
+  if(v==="main"){lastAgg=buildAgg();render();maybeRefresh();}
+}
+function maybeRefresh(){
+  if(!lastAgg||!Object.keys(lastAgg).length)return;
+  const ids=[...new Set(Object.values(lastAgg).map(a=>a.id).filter(Boolean))];
+  const missing=ids.some(id=>lastPrices[id]===undefined);
+  const stale=Date.now()-lastFetch>15000;
+  if(missing||stale)refreshAll();
+}
+$("tabs").onclick=e=>{const v=e.target.dataset.v;if(v)switchView(v);};
+
+// ---- name + currency ----
+$("nameInput").oninput=e=>{state.name=e.target.value||"My Portfolio";$("pname").textContent=state.name;save();};
+$("ccy").onclick=e=>{const c=e.target.dataset.c;if(!c)return;state.ccy=c;save();[...document.querySelectorAll("#ccy button")].forEach(b=>b.classList.toggle("on",b.dataset.c===c));render();};
+
+// ---- import / export ----
+$("exportBtn").onclick=()=>{
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob),a=document.createElement("a");
+  const stamp=new Date().toISOString().slice(0,10);
+  a.href=url;a.download=`${(state.name||"portfolio").replace(/[^a-z0-9]+/gi,"-").toLowerCase()}-${stamp}.json`;
+  document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  toast("Exported");
+};
+$("importBtn").onclick=()=>$("importFile").click();
+$("importFile").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const d=JSON.parse(r.result);
+      if(!d||!Array.isArray(d.holdings))throw new Error("not a valid portfolio file");
+      state={...state,...d};
+      if(!Array.isArray(state.locations))state.locations=[];
+      if(!state.holdings.length)state.holdings=[{asset:"",amount:"",location:""}];
+      save();applyStateToUI();refreshAll();toast("Imported "+state.holdings.filter(h=>h.asset).length+" holdings");
+    }catch(err){toast("Import failed: "+err.message);}
+    e.target.value="";
+  };
+  r.readAsText(f);
+};
+
+// ---- live ----
+const $liveDot=$("liveDot"),$liveStatus=$("liveStatus");let liveTimer=null;
+$("keyType").onclick=e=>{const k=e.target.dataset.k;if(!k)return;state.keyType=k;save();[...e.currentTarget.children].forEach(b=>b.classList.toggle("on",b.dataset.k===k));};
+$("interval").onclick=e=>{const s=e.target.dataset.s;if(s==null)return;state.interval=+s;save();[...e.currentTarget.children].forEach(b=>b.classList.toggle("on",b.dataset.s===s));startLive();};
+$("apiKey").oninput=e=>{state.apiKey=e.target.value.trim();save();};
+function startLive(){clearInterval(liveTimer);liveTimer=null;$liveDot.classList.remove("on");if(state.interval>0&&lastAgg&&Object.keys(lastAgg).length){$liveDot.classList.add("on");$liveStatus.textContent=`Live · every ${state.interval}s`;liveTimer=setInterval(tickPrices,state.interval*1000);}else $liveStatus.textContent="";}
+async function tickPrices(){lastAgg=buildAgg();if(!Object.keys(lastAgg).length)return;try{lastPrices=await getPrices([...new Set(Object.values(lastAgg).map(a=>a.id).filter(Boolean))]);lastFetch=Date.now();render();$liveStatus.textContent=`Live · updated ${new Date().toLocaleTimeString()}`;}catch(e){$liveDot.classList.remove("on");$liveStatus.textContent="Paused: "+e.message;clearInterval(liveTimer);liveTimer=null;}}
+
+// ---- sync UI from state ----
+function applyStateToUI(){
+  $("pname").textContent=state.name||"My Portfolio";
+  $("nameInput").value=state.name||"";
+  $("apiKey").value=state.apiKey||"";
+  [...document.querySelectorAll("#ccy button")].forEach(b=>b.classList.toggle("on",b.dataset.c===state.ccy));
+  [...document.querySelectorAll("#keyType button")].forEach(b=>b.classList.toggle("on",b.dataset.k===state.keyType));
+  [...document.querySelectorAll("#interval button")].forEach(b=>b.classList.toggle("on",+b.dataset.s===state.interval));
+  renderRows();renderLocRows();renderLocsDatalist();
+}
+
+// ---- boot ----
+load().then(()=>{
+  applyStateToUI();
+  const hasHoldings=state.holdings.some(h=>h.asset.trim()&&+h.amount>0);
+  if(hasHoldings)switchView("main");else switchView("accounts");
+});
+</script>
+</body>
+</html>

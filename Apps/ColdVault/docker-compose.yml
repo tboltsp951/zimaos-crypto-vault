@@ -1,0 +1,30 @@
+name: cold-vault
+services:
+  cold-vault:
+    image: ghcr.io/tboltsp951/zimaos-crypto-vault:latest
+    container_name: cold-vault
+    restart: unless-stopped
+    ports:
+      - 8193:8080
+    volumes:
+      - /DATA/AppData/cold-vault:/data
+
+x-casaos:
+  architectures:
+    - amd64
+    - arm64
+  main: cold-vault
+  description:
+    en_us: A personal cold-vault portfolio for crypto holdings. Track coins across multiple locations (exchanges, cold wallets, hardware), with live CoinGecko pricing, manual balance entry, and an AI-free, server-side autosave to your NAS.
+  tagline:
+    en_us: Track crypto holdings across locations
+  developer: tbolt
+  author: tbolt
+  icon: https://raw.githubusercontent.com/tboltsp951/zimaos-crypto-vault/main/Apps/ColdVault/icon.svg
+  thumbnail: https://raw.githubusercontent.com/tboltsp951/zimaos-crypto-vault/main/Apps/ColdVault/thumbnail.svg
+  screenshot_link:
+    - https://raw.githubusercontent.com/tboltsp951/zimaos-crypto-vault/main/Apps/ColdVault/screenshot.svg
+  title:
+    en_us: Cold Vault
+  category: Finance
+  port_map: "8193"
