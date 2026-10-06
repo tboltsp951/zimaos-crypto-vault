@@ -95,6 +95,23 @@
   footer{color:var(--mute);font-size:12px;text-align:center;margin-top:26px;line-height:1.7}
   footer code{color:var(--gold-dim)}
 
+  .coin-search{position:relative}
+  .coin-results{position:absolute;left:0;right:0;top:calc(100% + 6px);background:var(--panel-2);border:1px solid var(--line);border-radius:12px;max-height:270px;overflow-y:auto;z-index:30;box-shadow:var(--shadow)}
+  .coin-results button{display:flex;gap:10px;align-items:center;width:100%;background:none;border:0;color:var(--text);font:inherit;font-size:14px;padding:10px 13px;cursor:pointer;text-align:left}
+  .coin-results button:hover:not(:disabled){background:var(--panel)}
+  .coin-results button:disabled{cursor:default;opacity:.55}
+  .coin-results .sym{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;color:var(--gold);min-width:54px;flex:none}
+  .coin-results .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .coin-results .rank{color:var(--mute);font-size:11px;flex:none}
+  .coin-results .none{padding:13px;color:var(--mute);font-size:13px}
+  .coin-list{display:flex;flex-wrap:wrap;gap:8px;max-height:236px;overflow-y:auto;padding:2px}
+  .coin-pill{display:flex;align-items:center;gap:9px;background:var(--ink);border:1px solid var(--line);border-radius:11px;padding:6px 8px 6px 6px}
+  .coin-pill .txt{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+  .coin-pill .nm{font-size:13px;font-weight:600}
+  .coin-pill .cid{font-size:10px;color:var(--mute);font-family:ui-monospace,Menlo,Consolas,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px}
+  .coin-pill .x{background:none;border:0;color:var(--mute);cursor:pointer;font-size:16px;line-height:1;padding:3px 2px 3px 6px;transition:.15s;flex:none}
+  .coin-pill .x:hover{color:var(--red)}
+
   @media(max-width:600px){
     .h-head,.h-row{grid-template-columns:1.4fr 1fr 1.1fr}
     .h-head .price,.h-row .price{display:none}
@@ -162,6 +179,31 @@
       <div class="rowfoot"><button class="btn2" id="addloc">+ Add location</button></div>
     </div>
 
+    <div class="sec-head"><h3>Tracked coins</h3><span class="tag" id="cCount">0</span></div>
+    <div class="card" style="padding:16px 18px">
+      <div class="field">
+        <label>Search CoinGecko</label>
+        <div class="coin-search">
+          <input type="text" id="coinSearch" placeholder="Search by name or symbol — e.g. Chainlink" autocomplete="off">
+          <div class="coin-results" id="coinResults" hidden></div>
+        </div>
+        <div class="hint">Results come straight from CoinGecko. Click one — its ID, name and logo are saved automatically and price updates start working right away.</div>
+      </div>
+      <div class="field">
+        <label>Your coins</label>
+        <div class="coin-list" id="coinList"></div>
+        <div class="hint">These symbols appear in <b>Accounts</b> and are priced via CoinGecko. Coins still used by a holding can't be removed.</div>
+      </div>
+      <div class="field">
+        <label>Add by CoinGecko ID</label>
+        <div class="field-row">
+          <input type="text" id="coinIdInput" placeholder="e.g. bitcoin-cash" style="flex:1;min-width:170px" autocomplete="off">
+          <button class="btn2" id="addCoinId">Add coin</button>
+        </div>
+        <div class="hint">The ID is the slug in the coin's CoinGecko URL (<code>coingecko.com/en/coins/<i>bitcoin-cash</i></code>).</div>
+      </div>
+    </div>
+
     <div class="sec-head"><h3>Price feed &amp; live updates</h3></div>
     <div class="card" style="padding:16px 18px">
       <div class="field">
@@ -216,18 +258,23 @@ const COINS={
   PEPE:{id:"pepe",name:"Pepe",color:"#4a9e3f"},
 };
 
-let state={name:"My Portfolio",ccy:"usd",holdings:[],locations:[],apiKey:"",keyType:"demo",interval:0};
+let state={name:"My Portfolio",ccy:"usd",holdings:[],locations:[],customCoins:{},removedCoins:[],apiKey:"",keyType:"demo",interval:0};
 let lastAgg=null,lastPrices={},lastErrors=[],lastFetch=0;
 const $=id=>document.getElementById(id);
 
 function save(){try{const raw=JSON.stringify(state);if(window.storage){window.storage.set("coldvault",raw).catch(()=>{});}else{localStorage.setItem("coldvault",raw);}}catch(e){}}
 async function load(){if(window.storage){try{const d=await Promise.race([window.storage.get("coldvault"),new Promise(r=>setTimeout(()=>r(null),4000))]);if(d&&d.value){const s=JSON.parse(d.value);if(s&&typeof s==="object")state={...state,...s};}}catch(e){}}else{try{const s=JSON.parse(localStorage.getItem("coldvault"));if(s&&typeof s==="object")state={...state,...s};}catch(e){}}
   if(!Array.isArray(state.holdings)||!state.holdings.length)state.holdings=[{asset:"",amount:"",location:""}];
-  if(!Array.isArray(state.locations))state.locations=[];}
-function colorFor(sym){if(COINS[sym])return COINS[sym].color;let h=0;for(const c of sym)h=(h*31+c.charCodeAt(0))>>>0;return `hsl(${h%360} 55% 58%)`;}
+  if(!Array.isArray(state.locations))state.locations=[];
+  if(!state.customCoins||typeof state.customCoins!=="object")state.customCoins={};
+  if(!Array.isArray(state.removedCoins))state.removedCoins=[];}
+function colorFor(sym){const m=coinMeta(sym);if(m&&m.color)return m.color;let h=0;for(const c of sym)h=(h*31+c.charCodeAt(0))>>>0;return `hsl(${h%360} 55% 58%)`;}
+function coinMeta(sym){if(!sym)return null;return state.customCoins[sym]||COINS[sym]||null;}
+function trackedCoins(){const out={};Object.entries(COINS).forEach(([s,c])=>{if(!state.removedCoins.includes(s))out[s]=c;});Object.entries(state.customCoins).forEach(([s,c])=>out[s]=c);return out;}
 function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2200);}
 
-(function(){$("coins").innerHTML=Object.entries(COINS).map(([s,c])=>`<option value="${s}">${c.name}</option>`).join("");})();
+(function(){renderCoinDatalist();})();
+function renderCoinDatalist(){const t=trackedCoins();$("coins").innerHTML=Object.entries(t).map(([s,c])=>`<option value="${s}">${c.name}</option>`).join("");}
 function renderLocsDatalist(){$("locs").innerHTML=state.locations.filter(x=>x.trim()).map(l=>`<option value="${l.replace(/"/g,'&quot;')}">`).join("");}
 
 // ---- Accounts (holdings) ----
@@ -274,23 +321,103 @@ $("addloc").onclick=()=>{state.locations.push("");save();renderLocRows();};
 function lcount(){$("lCount").textContent=state.locations.filter(l=>l.trim()).length;}
 function counts(){$("hCount").textContent=state.holdings.filter(h=>h.asset.trim()&&+h.amount>0).length;}
 
+// ---- tracked coins manager ----
+function renderCoinList(){
+  const list=trackedCoins(),syms=Object.keys(list).sort();
+  $("cCount").textContent=syms.length;
+  const used=new Set(state.holdings.map(h=>(h.asset||"").trim().toUpperCase()).filter(Boolean));
+  if(!syms.length){$("coinList").innerHTML='<div class="empty" style="padding:14px">No coins tracked — add one above.</div>';return;}
+  $("coinList").innerHTML=syms.map(s=>{
+    const c=list[s];
+    const img=c.img?`<img src="${c.img.replace(/"/g,"%22")}" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:6px">`:s.slice(0,3);
+    const del=used.has(s)?"":`<button class="x" data-s="${s.replace(/"/g,"&quot;")}" title="Remove from list">×</button>`;
+    return `<div class="coin-pill"><span class="chip" style="background:${c.color||colorFor(s)}">${img}</span><span class="txt"><span class="nm">${(c.name||s).replace(/</g,"&lt;")}</span><span class="cid">${(c.id||"").replace(/</g,"&lt;")}</span></span>${del}</div>`;
+  }).join("");
+  $("coinList").querySelectorAll(".x").forEach(b=>b.onclick=()=>removeCoin(b.dataset.s));
+}
+function removeCoin(sym){
+  const used=state.holdings.filter(h=>(h.asset||"").trim().toUpperCase()===sym).length;
+  if(used){toast(sym+" is used in "+used+" holding"+(used>1?"s":"")+" — remove it there first");return;}
+  if(state.customCoins[sym])delete state.customCoins[sym];
+  else if(COINS[sym]&&!state.removedCoins.includes(sym))state.removedCoins.push(sym);
+  save();renderCoinList();renderCoinDatalist();liveRecompute();
+}
+async function addCoin(sym,meta){
+  sym=(sym||"").trim().toUpperCase();
+  if(!sym||!meta||!meta.id)return false;
+  const cur=trackedCoins();
+  if(cur[sym]&&cur[sym].id===meta.id){toast(sym+" is already tracked");return false;}
+  let price=null;
+  try{const p=await cgGet(`/simple/price?ids=${encodeURIComponent(meta.id)}&vs_currencies=usd`);price=p[meta.id]?.usd??null;}
+  catch(e){toast("Couldn't reach CoinGecko: "+e.message);return false;}
+  if(price==null){toast("No price data for '"+meta.id+"' — check the CoinGecko ID");return false;}
+  state.customCoins[sym]={id:meta.id,name:meta.name||sym,color:meta.color||null,img:meta.img||""};
+  save();renderCoinList();renderCoinDatalist();
+  toast(`Added ${sym} · $${price.toLocaleString(undefined,{maximumFractionDigits:price<1?8:2})}`);
+  refreshAll();
+  return true;
+}
+let searchTimer=null,searchSeq=0;
+$("coinSearch").oninput=e=>{
+  clearTimeout(searchTimer);
+  const q=e.target.value.trim();
+  if(q.length<2){$("coinResults").hidden=true;$("coinResults").innerHTML="";return;}
+  searchTimer=setTimeout(()=>coinSearch(q),300);
+};
+$("coinSearch").onblur=()=>setTimeout(()=>{$("coinResults").hidden=true;},180);
+async function coinSearch(q){
+  const seq=++searchSeq,box=$("coinResults");
+  box.hidden=false;box.innerHTML='<div class="none"><span class="spin"></span>Searching CoinGecko…</div>';
+  let coins;
+  try{const d=await cgGet("/search?query="+encodeURIComponent(q));coins=(d.coins||[]).slice(0,8);}
+  catch(e){if(seq===searchSeq)box.innerHTML=`<div class="none">Search failed: ${e.message}</div>`;return;}
+  if(seq!==searchSeq)return;
+  if(!coins.length){box.innerHTML='<div class="none">No matches. Try a CoinGecko ID below.</div>';return;}
+  const cur=trackedCoins();
+  box.innerHTML=coins.map(c=>{
+    const has=Object.values(cur).some(x=>x.id===c.id);
+    const rk=c.market_cap_rank?`#${c.market_cap_rank}`:"—";
+    const img=c.thumb||c.large||"";
+    return `<button type="button" data-id="${c.id}" data-sym="${c.symbol}" data-name="${(c.name||"").replace(/"/g,"&quot;")}" data-img="${img.replace(/"/g,"%22")}" ${has?"disabled":""}><span class="sym">${(c.symbol||"").toUpperCase()}</span><span class="nm">${(c.name||"").replace(/</g,"&lt;")}</span><span class="rank">${has?"tracked":rk}</span></button>`;
+  }).join("");
+  box.querySelectorAll("button").forEach(b=>b.onmousedown=ev=>{ev.preventDefault();addCoin(b.dataset.sym,{id:b.dataset.id,name:b.dataset.name,img:b.dataset.img});box.hidden=true;$("coinSearch").value="";});
+}
+$("addCoinId").onclick=async()=>{
+  const raw=$("coinIdInput").value.trim().toLowerCase();
+  if(!raw)return;
+  const btn=$("addCoinId"),label=btn.textContent;
+  btn.disabled=true;btn.textContent="Checking…";
+  try{
+    const m=await cgGet("/coins/markets?vs_currency=usd&ids="+encodeURIComponent(raw));
+    if(!Array.isArray(m)||!m.length){toast("No coin with id '"+raw+"' on CoinGecko");return;}
+    const ok=await addCoin(m[0].symbol,{id:m[0].id,name:m[0].name,img:m[0].image});
+    if(ok)$("coinIdInput").value="";
+  }catch(e){toast(e.message);}
+  finally{btn.disabled=false;btn.textContent=label;}
+};
+$("coinIdInput").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("addCoinId").click();}};
+
 // ---- pricing / aggregate ----
+function cgBase(){const pro=state.keyType==="pro"&&state.apiKey.trim();return pro?"https://pro-api.coingecko.com/api/v3":"https://api.coingecko.com/api/v3";}
+function cgHeaders(){const key=state.apiKey.trim(),h={};if(key)h[state.keyType==="pro"?"x-cg-pro-api-key":"x-cg-demo-api-key"]=key;return h;}
+async function cgGet(path){
+  const r=await fetch(cgBase()+path,{headers:cgHeaders()});
+  if(!r.ok)throw new Error(r.status===401||r.status===403?"invalid API key":r.status===429?"rate limited":"price feed down");
+  return r.json();
+}
 function buildAgg(){
   const agg={};
   state.holdings.forEach(h=>{
     const sym=(h.asset||"").trim().toUpperCase(),amt=+h.amount;
     if(!sym||!(amt>0))return;
-    if(!agg[sym])agg[sym]={amount:0,id:COINS[sym]?.id||null,color:colorFor(sym),sources:new Set()};
+    if(!agg[sym])agg[sym]={amount:0,id:coinMeta(sym)?.id||null,color:colorFor(sym),sources:new Set()};
     agg[sym].amount+=amt;if((h.location||"").trim())agg[sym].sources.add(h.location.trim());
   });
   return agg;
 }
 async function getPrices(ids){
   if(!ids.length)return {};
-  const key=state.apiKey.trim(),pro=state.keyType==="pro"&&key;
-  const base=pro?"https://pro-api.coingecko.com/api/v3":"https://api.coingecko.com/api/v3";
-  const headers={};if(key)headers[pro?"x-cg-pro-api-key":"x-cg-demo-api-key"]=key;
-  const r=await fetch(`${base}/simple/price?ids=${ids.join(",")}&vs_currencies=usd,eur,gbp`,{headers});
+  const r=await fetch(`${cgBase()}/simple/price?ids=${ids.join(",")}&vs_currencies=usd,eur,gbp`,{headers:cgHeaders()});
   if(!r.ok)throw new Error(r.status===401||r.status===403?"invalid API key":r.status===429?"rate limited":"price feed down");
   return r.json();
 }
@@ -313,7 +440,7 @@ function render(){
     const amt=d.amount.toLocaleString(undefined,{maximumFractionDigits:8});
     const ps=price!=null?sign+price.toLocaleString(undefined,{maximumFractionDigits:price<1?6:2}):"—";
     const vs=value!=null?sign+value.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}):'<span style="color:var(--mute)">—</span>';
-    const src=[...d.sources].join(", ")||(COINS[sym]?.name||"");
+    const src=[...d.sources].join(", ")||(coinMeta(sym)?.name||"");
     return `<div class="h-row"><div class="coin"><span class="chip" style="background:${d.color}">${sym.slice(0,3)}</span><span class="nm">${sym}<span class="src">${src}</span></span></div><div class="num">${amt}</div><div class="price">${ps}</div><div class="val">${vs}</div></div>`;
   }).join("");
   $("holdings").innerHTML=(rows||'<div class="empty"><b>No holdings yet.</b><br>Open <b>Accounts</b> to add what you hold.</div>')+lastErrors.map(e=>`<div class="err">⚠ ${e}</div>`).join("");
@@ -363,6 +490,8 @@ $("importFile").onchange=e=>{
       if(!d||!Array.isArray(d.holdings))throw new Error("not a valid portfolio file");
       state={...state,...d};
       if(!Array.isArray(state.locations))state.locations=[];
+      if(!state.customCoins||typeof state.customCoins!=="object")state.customCoins={};
+      if(!Array.isArray(state.removedCoins))state.removedCoins=[];
       if(!state.holdings.length)state.holdings=[{asset:"",amount:"",location:""}];
       save();applyStateToUI();refreshAll();toast("Imported "+state.holdings.filter(h=>h.asset).length+" holdings");
     }catch(err){toast("Import failed: "+err.message);}
@@ -387,7 +516,7 @@ function applyStateToUI(){
   [...document.querySelectorAll("#ccy button")].forEach(b=>b.classList.toggle("on",b.dataset.c===state.ccy));
   [...document.querySelectorAll("#keyType button")].forEach(b=>b.classList.toggle("on",b.dataset.k===state.keyType));
   [...document.querySelectorAll("#interval button")].forEach(b=>b.classList.toggle("on",+b.dataset.s===state.interval));
-  renderRows();renderLocRows();renderLocsDatalist();
+  renderRows();renderLocRows();renderLocsDatalist();renderCoinDatalist();renderCoinList();
 }
 
 // ---- boot ----

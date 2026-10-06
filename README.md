@@ -3,8 +3,9 @@
 Turns the single-file `crypto-vault.html` into a self-hosted ZimaOS app.
 The page keeps all of its behavior — portfolio totals, per-asset holdings,
 locations (exchanges / hardware / hot wallets), manual balances, live
-CoinGecko pricing, and currency switching — and gains one new thing:
-**data is saved to your NAS disk** via a tiny storage bridge.
+CoinGecko pricing, currency switching, and the Tracked coins manager
+(CoinGecko search / add-by-ID to price any coin you hold) — and gains one
+new thing: **data is saved to your NAS disk** via a tiny storage bridge.
 
 The original page only had **no localStorage fallback** (just Export/Import).
 With the bridge, every browser on your network sees the same portfolio, and
