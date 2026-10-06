@@ -78,6 +78,25 @@ Open `http://<zimaos-ip>:8193`.
 The icon/thumbnail URLs in the manifest point at raw GitHub files, so they
 only resolve once the repo is public.
 
+## Updating
+
+The store manifest sets `pull_policy: always`, so every install / update /
+reinstall pulls the current `:latest` image from GHCR instead of reusing a
+stale cached one (ZimaOS only compares image *tags* for update detection, and
+`:latest` never changes string-wise). The manifest also carries
+`x-casaos.version`, bumped on each release, so the store can show an update.
+
+Fastest refresh without waiting for the store:
+
+```sh
+docker pull ghcr.io/tboltsp951/zimaos-crypto-vault:latest
+docker rm -f cold-vault     # then reinstall from ZimaOS, or docker run again
+```
+
+If your ZimaOS/compose version rejects `pull_policy`, install fails with
+"Additional property pull_policy is not allowed" — remove that one line and
+pull manually as above.
+
 ## Testing locally (no Docker needed)
 
 ```sh

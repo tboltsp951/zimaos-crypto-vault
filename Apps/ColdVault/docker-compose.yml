@@ -2,6 +2,7 @@ name: cold-vault
 services:
   cold-vault:
     image: ghcr.io/tboltsp951/zimaos-crypto-vault:latest
+    pull_policy: always
     container_name: cold-vault
     restart: unless-stopped
     ports:
@@ -26,5 +27,6 @@ x-casaos:
     - https://raw.githubusercontent.com/tboltsp951/zimaos-crypto-vault/main/Apps/ColdVault/screenshot.svg
   title:
     en_us: Cold Vault
+  version: "1.1.0"
   category: Finance
   port_map: "8193"
